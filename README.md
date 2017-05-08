@@ -6,7 +6,6 @@ Este projeto  faz parte da minha dissertação de mestrado. Ele consiste em uma 
 
 * O objetivo desta simulação é atestar o quadro formal elaborado na dissertação.
 * 0.5
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
 ### How do I get set up? ###
 
