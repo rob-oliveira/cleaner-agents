@@ -1,0 +1,63 @@
+to measure-energy
+  let num-of-robots count robots
+  set energy-spent sum [energy] of robots
+  set energy-spent energy-spent / num-of-robots
+  ;;show energy-spent
+end
+
+to measure-cleanliness
+  let num-of-robots count robots
+  set total-cleanliness sum [cleanliness] of robots
+  set total-cleanliness total-cleanliness / num-of-robots
+  ;;show total-cleanliness
+end
+
+to measure-satisfaction
+  set total-satisfaction sum [insatisfaction] of robots
+  set total-satisfaction total-satisfaction / num-agents
+  ;;show total-utility
+end
+
+to set-utility
+  ask robots[
+    set utility 2 * cleanliness - energy -(2 * insatisfaction)
+  ]
+end
+
+to measure-utility
+  set total-utility sum [utility] of robots
+  set total-utility total-utility / num-agents
+  ;;show total-utility
+end
+
+to follow-wall
+
+  ;; turn right if necessary
+  if not wall? (90 * direction) and wall? (135 * direction) [ rt 90 * direction]
+  ;; turn left if necessary (sometimes more than once)
+  while [wall? 0] [ lt 90 * direction]
+  ;; move forward
+  fd 1
+end
+
+to-report wall? [angle]  ;; turtle procedure
+  ;; note that angle may be positive or negative.  if angle is
+  ;; positive, the turtle looks right.  if angle is negative,
+  ;; the turtle looks left.
+  ifelse patch-right-and-ahead angle 1 != nobody [
+    report brown = [pcolor] of patch-right-and-ahead angle 1
+  ][
+    report true
+  ]
+end
+
+to move-random
+   ifelse (can-move? 1) and not path-blocked? and not turtle-ahead? [
+     forward 1
+   ]
+   [;bounce
+     right random-float 360
+   ]
+   if breed = robots [set energy energy + 1]
+   
+end

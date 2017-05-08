@@ -1,0 +1,44 @@
+to setup-users
+  ask n-of num-users patches with [pcolor = white][sprout-users 1[
+    set color blue
+    set shape "circle"
+    set direction 1
+    set movement-type random 2
+    set heading 0
+  ]
+  ]
+end
+
+to insert-users [num]
+    ask n-of num patches with [pcolor = green][sprout-users 1[
+    set color blue
+    set shape "circle"
+    set direction 1
+    set movement-type random 2
+    set heading 90
+  ]
+  ]
+end
+
+to user-dust
+  let d random 100
+  if d < user-dirty [ ;;porcentagem de deixar sugeira
+    if pcolor = white [set pcolor grey]
+  ]
+end
+
+to exit-room
+  if pcolor = green [ die ]
+end
+
+to user-behaviour
+  ifelse movement-type = 1[
+    follow-wall
+  ][
+    move-random
+  ]
+  set moves moves + 1
+  if moves > 10 [exit-room]
+  user-dust
+end
+

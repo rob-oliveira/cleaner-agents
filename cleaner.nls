@@ -1,0 +1,73 @@
+to-report turtle-ahead?
+  report count other turtles-on patch-ahead 1 > 0
+end
+
+to-report user-ahead?
+  ifelse count other users-on patch-ahead 1 > 0 [
+    ;;show "USUARIO"
+    set insatisfaction  insatisfaction + bump-user ;;colisão com usuarios
+    report true
+  ][
+    report turtle-ahead?
+  ]
+end
+
+to-report path-blocked?
+  report [pcolor] of patch-ahead 1 = brown
+end
+
+to move-intelligent
+  ;;print energy
+  ifelse (can-move? 1) and not path-blocked? and not user-ahead? [
+    ifelse error-prob?[
+      ;;show "walk-error"
+      ;;wait 0.5
+      move-random
+     ][
+      move-to-dust
+     ]
+  ][;bounce
+    right random 360
+  ]
+end
+
+to-report dust-close?
+  ifelse any? patches with [pcolor = grey] [
+    report (distance (min-one-of (patches with [pcolor = grey]) [distance myself]) ) <= 3 ;; distancia de 3 patchs
+  ]
+  [report false]
+end
+
+
+to scan-dust
+  ;;show (distance (min-one-of (patches with [pcolor = grey]) [distance myself]) ) ;; distancia de 3 patchs
+end
+
+to move-to-dust
+  fd 1
+  if dust-close? [
+    face min-one-of patches with [ pcolor = grey ] [ distance myself ]
+  ]
+  set energy energy + move-energy
+end
+
+to-report error-prob?
+  let p random 100
+  ifelse p < error-probability [report true] [report false]
+end
+
+
+to vacuuming-dust
+  if pcolor = grey [
+  ifelse error-prob?[
+    ;;show "vacuum-error"
+    move-random 
+  ][
+    set cleanliness cleanliness + clean-energy
+    set energy energy + move-energy * 2
+    ;;print cleanliness
+    set pcolor white
+   ]
+  ]
+
+end
