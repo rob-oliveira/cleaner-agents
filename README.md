@@ -10,20 +10,5 @@ Este projeto  faz parte da minha dissertação de mestrado. Ele consiste em uma 
 
 ### How do I get set up? ###
 
-* Para iniciar a simulação é necessario utilizar a plataforma NetLogo. 
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+* Para iniciar a simulação é necessario utilizar a plataforma [NetLogo](https://ccl.northwestern.edu/netlogo/). 
+* Ao abrir o arquivo no NetLogo basta clicar no botão setup e em seguida go.
