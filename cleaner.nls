@@ -1,3 +1,21 @@
+
+to setup-robots
+  ask n-of num-agents patches with [pcolor = white][sprout-robots 1[
+    set color red
+    set shape "circle"
+    set direction 1
+    ifelse separate-zones? [
+      set belonged-zone random 3
+      set label belonged-zone
+    ][
+      set belonged-zone 0
+    ]
+    
+    ;;set rest false
+    ]
+  ]
+end
+
 to-report turtle-ahead?
   report count other turtles-on patch-ahead 1 > 0
 end
@@ -12,43 +30,72 @@ to-report user-ahead?
   ]
 end
 
-to-report path-blocked?
-  report [pcolor] of patch-ahead 1 = brown
-end
 
 to move-intelligent
   ;;print energy
   ifelse (can-move? 1) and not path-blocked? and not user-ahead? [
+    ;;show "bloqueado"
     ifelse error-prob?[
       ;;show "walk-error"
       ;;wait 0.5
       move-random
      ][
+      ;;show "move dust"
       move-to-dust
+      ;;if not rest [set energy energy + move-energy]
      ]
   ][;bounce
-    right random 360
+    ;;rt 90
+    move-random
   ]
 end
 
 to-report dust-close?
-  ifelse any? patches with [pcolor = grey] [
-    report (distance (min-one-of (patches with [pcolor = grey]) [distance myself]) ) <= 3 ;; distancia de 3 patchs
+  let sector belonged-zone
+  ifelse any? patches with [pcolor = grey and zone = sector ] [
+  ;;show "dust"
+    let dust (min-one-of (patches with [pcolor = grey and zone = sector]) [distance myself])
+    ;;show [zone] of dust
+    ifelse dust != nobody and distance dust <= 3[
+      let dir heading
+      face dust
+      ifelse (can-move? 1) and  path-blocked?[
+        set heading dir
+        report false
+      ][
+        report true
+      ]
+    ][
+      report false
+    ]
   ]
   [report false]
 end
 
 
-to scan-dust
-  ;;show (distance (min-one-of (patches with [pcolor = grey]) [distance myself]) ) ;; distancia de 3 patchs
+to-report scan-dust?
+  let sector belonged-zone
+  if any? patches with [pcolor = grey  and zone = sector] [
+
+    let dust (min-one-of (patches with [pcolor = grey and zone = sector]) [distance myself])
+    if dust != nobody and distance dust <= 5 [ 
+      let dir heading
+      face dust
+      ifelse path-blocked?[
+        set heading dir
+        report false
+      ][
+        report true
+      ]
+    ]
+  ]
+  report false
 end
 
 to move-to-dust
-  fd 1
-  if dust-close? [
-    face min-one-of patches with [ pcolor = grey ] [ distance myself ]
-  ]
-  set energy energy + move-energy
+    fd 1
+    set energy energy + move-energy
+    ;;face min-one-of patches with [ pcolor = grey ] [ distance myself ]
 end
 
 to-report error-prob?
@@ -69,5 +116,69 @@ to vacuuming-dust
     set pcolor white
    ]
   ]
+end
 
+to-report in-zone?
+  report belonged-zone = zone
+end
+
+to behave-cleaner
+  set label belonged-zone
+
+  ifelse not in-zone?[
+    ;;move-random
+    find-zone
+  ][
+    ifelse dust-close? [
+      ;;show "int"
+      move-intelligent
+    ][
+      ifelse scan-dust? [
+       ;; show "scan"
+        move-random
+      ][
+        ;;show "inform"
+        ifelse managers-on? [inform-manager] [move-random]
+      ]
+    ]
+    vacuuming-dust
+  ]
+end
+
+to find-zone
+  ifelse belonged-zone = 0 [
+    if not wall? 0 [ set heading 180] ;;sul
+    ifelse xcor > 0 [set direction -1] [set direction 1]
+    
+  ][
+    ifelse belonged-zone = 1[
+      ifelse zone = 0 [
+        set heading 0
+        set direction -1
+        
+      ][
+         set heading 180
+        set direction -1
+        
+      ]
+    ][;;belongs to zone 2
+       ;;show belonged-zone
+       if not wall? 0  and heading != 0 [ set heading 0] ;;norte
+       ifelse wall? 0  and xcor > 0 [set direction 1] [set direction -1]
+        
+    ]
+  ]
+  follow-wall
+end
+
+to inform-manager
+  ask managers with [zone = belonged-zone] [
+    inform-idle myself
+  ]
+end
+
+to request-move[boss]
+  ;;show "moving"
+  face boss
+  move-random
 end

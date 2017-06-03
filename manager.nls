@@ -1,0 +1,111 @@
+
+
+
+to setup-managers[sector]
+  ;;show sector
+  ask n-of 1 patches with [zone = sector and pcolor = white][sprout-managers 1[
+      set color green
+      set shape "circle"
+      set belonged-zone sector
+      set label belonged-zone
+      set steps 5 ;; valor do raio de escaner
+      ;;set rest false
+    ]
+  ]
+end
+
+
+to send-message
+  let targets min-one-of other robots in-radius 5 [distance myself]
+  ;;scan-dust
+  if targets != nobody [ ask targets  [receive-message 1 myself]]
+end
+
+to receive-message [message sender]
+  if message = 1 [
+    ;;show "WORKS!!"
+    face sender
+    rt 180
+    ;;fd 1
+  ]
+  ;;show sender
+end
+
+to behave-manager
+   set label belonged-zone
+   ;;observe-zone
+   ifelse not in-zone?[
+    ;;move-random
+    find-zone
+  ][
+    ifelse dust-close? [
+      ;;show "move-int"
+      move-intelligent
+    ][
+      ifelse scan-dust? [
+        ;;show "scan"
+        move-random
+        ;;fd 1
+     ][
+       ;;show "search"
+       search-dust 
+     ]
+    ]
+    ;;ask managers [send-message]
+    vacuuming-dust
+    if too-dirty? [ask-help] 
+  ]
+
+end
+
+to-report too-dirty?
+  let total count patches with [pcolor = white or pcolor = grey] in-radius 5
+  let dirty count patches with [pcolor = grey] in-radius 5
+  
+  report dirty / total > 0.5
+  ;;if dirty / total > 0.5 [ask-help]
+end
+
+to-report dust-around
+  let total count patches  with [pcolor = white or pcolor = grey] in-radius 5
+  let dirty count patches with [pcolor = grey] in-radius 5
+  
+  report dirty / total
+end
+
+to ask-help ;; request - requisita aos outros managers envio de agentes aspiradores
+  ask other managers [send-help belonged-zone myself]
+end
+
+to send-help[sector sender]
+  if not too-dirty? [send-msg-cleaner-zone [belonged-zone] of sender]
+end
+
+to send-msg-cleaner-zone [sector]
+  ask robots with [zone = belonged-zone] [
+    ;;show belonged-zone
+    if not dust-close?[ 
+      set belonged-zone sector
+    ]
+  ]
+end
+
+
+to search-dust
+  ;;show "search"
+  if observe-zone > 0.1 [
+    move-random
+  ]
+end
+
+to inform-idle [cleaner]
+  if dust-around > 0.3 [
+    ask cleaner [request-move myself]
+  ]
+end
+
+to-report observe-zone
+  let dust  count patches with [zone = [belonged-zone] of myself and pcolor = grey]
+  let num-patches count patches with [zone = [belonged-zone] of myself and not (pcolor = brown)]
+  report dust / num-patches
+end

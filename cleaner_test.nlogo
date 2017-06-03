@@ -1,4 +1,4 @@
-__includes["users.nls" "cleaner.nls" "util.nls"]
+__includes["users.nls" "cleaner.nls" "manager.nls" "util.nls"]
 
 
 globals [
@@ -9,17 +9,17 @@ globals [
   total-satisfaction
   total-utility
 
-
+  dirty-percentage
 ]
 
 breed [robots robot]
 breed [managers manager]
 breed [users user]
 
-robots-own [energy cleanliness insatisfaction utility sender-list]
-managers-own [energy cleanliness insatisfaction utility ]
+robots-own [energy cleanliness insatisfaction utility belonged-zone direction]
+managers-own [energy cleanliness insatisfaction utility belonged-zone direction steps]
 users-own [moves direction movement-type]
-patches-own [dirty-regrowth]
+patches-own [dirty-regrowth zone]
 
 
 
@@ -33,75 +33,71 @@ to setup
   set initial-dustiness count patches with [pcolor = grey]
 
   setup-robots
-  setup-users
-  setup-managers
+  if users-on? [setup-users]
 
+  if managers-on?[
+    setup-managers 0
+    setup-managers 1
+    setup-managers 2
+  ]
+  get-clean-percentage
   reset-ticks
 end
 
 
-to setup-managers
-  ask n-of 2 patches with [pcolor = white][sprout-managers 1[
-    set color green
-    set shape "circle"
-    ]
-  ]
-end
-
-to setup-robots
-  ask n-of num-agents patches with [pcolor = white][sprout-robots 1[
-    set color red
-    set shape "circle"
-    ]
-  ]
-end
 
 to go
   if count patches with [pcolor = grey] = 0 [stop]
+  if tick >= 1000 [stop]
   let current-users count users
-  if current-users < num-users [insert-users num-users - current-users]
+  if users-on? and current-users < num-users [insert-users num-users - current-users]
 
-  ask robots [move-intelligent]
-  ask robots [vacuuming-dust]
+  ask robots [behave-cleaner]
 
-  ask managers [send-message]
-  ask managers [move-intelligent]
-  ask managers [vacuuming-dust]
+  ask managers [behave-manager]
 
   ask users [user-behaviour]
 
   measure-energy
   measure-cleanliness
   measure-satisfaction
-  set-utility
+  ask robots [set-utility]
+  ask managers [set-utility]
   measure-utility
-
+  get-clean-percentage
   random-dirty
   tick
 end
 
-to send-message
-  let targets min-one-of other robots in-radius 5 [distance myself]
-  ;;scan-dust
-  if targets != nobody [ ask targets  [receive-message 1 myself]]
-end
 
-to receive-message [message sender]
-  if message = 1 [
-    ;;show "WORKS!!"
-    face sender
-    rt 180
-    ;;fd 1
-  ]
-  ;;show sender
-end
 
 to setup-patches
   ask patches [
     set pcolor white
     set dirty-regrowth random dirty-time
   ]
+  ifelse separate-zones?[
+    set-zones
+  ][
+    ask patches [set zone 0]
+  ]
   setup-dirty
+end
+
+to set-zones
+  ask patches with [pycor < -6] [
+    ;;set pcolor pink
+    set zone 0
+  ]
+  ask patches with [pycor > -7 and pycor < 7] [
+    ;;set pcolor red
+    set zone 1
+  ]
+  ask patches with [pycor > 6] [
+    ;;set pcolor yellow
+    set zone 2
+  ]
+
 end
 
 to setup-dirty
@@ -121,6 +117,12 @@ to random-dirty
   ]
 end
 
+to get-clean-percentage
+  let dirty-tiles count patches with [pcolor = grey]
+  let clean-tiles count patches with [pcolor = white]
+  set dirty-percentage 100 * (dirty-tiles / (clean-tiles + dirty-tiles))
+end
+
 to setup-obstacles
   ;;table
   ask patches with [pxcor > world-width * -0.5 and
@@ -128,8 +130,8 @@ to setup-obstacles
                     pycor > world-width *  0.3 and
                     pycor < world-width *  0.5]
   [ set pcolor brown ]
-  ask patch -12 7 [ set pcolor brown]
-  ask patch -14 7 [ set pcolor brown]
+  ;;ask patch -12 7 [ set pcolor brown]
+  ;;ask patch -14 7 [ set pcolor brown]
   ask patch -12 5 [ set pcolor brown]
   ask patch -14 5 [ set pcolor brown]
   ask patch -7 12 [ set pcolor brown]
@@ -198,7 +200,7 @@ GRAPHICS-WINDOW
 1
 1
 ticks
-60.0
+30.0
 
 BUTTON
 123
@@ -235,10 +237,10 @@ NIL
 1
 
 PLOT
-703
-182
-1144
-481
+699
+178
+1140
+477
 Utilidade dos agentes
 iterações
 NIL
@@ -264,7 +266,7 @@ num-agents
 num-agents
 1
 100
-5.0
+1.0
 1
 1
 NIL
@@ -279,7 +281,7 @@ num-users
 num-users
 0
 100
-61.0
+3.0
 1
 1
 NIL
@@ -309,7 +311,7 @@ user-dirty
 user-dirty
 0
 100
-7.0
+5.0
 1
 1
 %
@@ -323,29 +325,29 @@ SLIDER
 error-probability
 error-probability
 0
-100
-0.0
+10
+1.6
 0.1
 1
 %
 HORIZONTAL
 
 INPUTBOX
-764
-15
-852
-75
+697
+10
+785
+70
 clean-energy
-10.0
+15.0
 1
 0
 Number
 
 INPUTBOX
-852
-15
-930
-75
+785
+10
+863
+70
 move-energy
 1.0
 1
@@ -353,15 +355,59 @@ move-energy
 Number
 
 INPUTBOX
-929
-15
-998
-75
+862
+10
+931
+70
 bump-user
 10.0
 1
 0
 Number
+
+SWITCH
+699
+81
+849
+114
+managers-on?
+managers-on?
+1
+1
+-1000
+
+SWITCH
+985
+80
+1135
+113
+separate-zones?
+separate-zones?
+1
+1
+-1000
+
+SWITCH
+853
+81
+980
+114
+users-on?
+users-on?
+0
+1
+-1000
+
+MONITOR
+700
+131
+787
+176
+dirty%
+dirty-percentage
+5
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -715,7 +761,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0
+NetLogo 6.0.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

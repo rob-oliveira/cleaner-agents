@@ -1,32 +1,36 @@
 to measure-energy
-  let num-of-robots count robots
+  let num-of-managers count managers
   set energy-spent sum [energy] of robots
-  set energy-spent energy-spent / num-of-robots
+  set energy-spent energy-spent + sum [energy] of managers
+  set energy-spent energy-spent / (num-agents + num-of-managers)
   ;;show energy-spent
 end
 
 to measure-cleanliness
-  let num-of-robots count robots
+  let num-of-managers count managers
   set total-cleanliness sum [cleanliness] of robots
-  set total-cleanliness total-cleanliness / num-of-robots
+  set total-cleanliness total-cleanliness + sum [cleanliness] of managers
+  set total-cleanliness total-cleanliness / (num-agents + num-of-managers)
   ;;show total-cleanliness
 end
 
 to measure-satisfaction
+  let num-of-managers count managers
   set total-satisfaction sum [insatisfaction] of robots
-  set total-satisfaction total-satisfaction / num-agents
+  set total-satisfaction total-satisfaction + sum [insatisfaction] of managers
+  set total-satisfaction total-satisfaction / (num-agents + num-of-managers)
   ;;show total-utility
 end
 
 to set-utility
-  ask robots[
-    set utility 2 * cleanliness - energy -(2 * insatisfaction)
-  ]
+  set utility 2 * cleanliness - energy -(2 * insatisfaction)
 end
 
 to measure-utility
+  let num-of-managers count managers
   set total-utility sum [utility] of robots
-  set total-utility total-utility / num-agents
+  set total-utility total-utility + sum [utility] of managers
+  set total-utility total-utility / (num-agents + num-of-managers)
   ;;show total-utility
 end
 
@@ -51,13 +55,29 @@ to-report wall? [angle]  ;; turtle procedure
   ]
 end
 
+to-report path-blocked?
+  ifelse breed = robots[
+    ;;show [pcolor] of patch-ahead 1
+    
+    report [pcolor] of patch-ahead 1 = brown and [zone] of patch-ahead 1 = belonged-zone
+  ][
+    report [pcolor] of patch-ahead 1 = brown 
+  ]
+end
+
+
+
 to move-random
+  
    ifelse (can-move? 1) and not path-blocked? and not turtle-ahead? [
+   ;; if breed = managers [show "can move"]
      forward 1
    ]
    [;bounce
-     right random-float 360
+     ;;show "random"
+     set heading random-float 360
+     ;;rt 180
+     ;;orward 1
    ]
-   if breed = robots [set energy energy + 1]
-   
+   if breed = robots or breed = managers [set energy energy + move-energy]
 end
