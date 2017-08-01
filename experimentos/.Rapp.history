@@ -1,0 +1,6 @@
+source("/Users/robson/Dropbox/MACC/DISSERTAÇÃO/codigos/teste.r")
+ls
+load(".RData")
+ls()
+load(".RData")
+source("get_exp1_means.r")

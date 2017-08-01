@@ -1,5 +1,5 @@
 to setup-users
-  ask n-of num-users patches with [pcolor = white][sprout-users 1[
+  ask n-of num-users patches with [pcolor = white or pcolor = grey][sprout-users 1[
     set color blue
     set shape "circle"
     set direction 1

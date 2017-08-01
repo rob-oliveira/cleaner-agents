@@ -1,6 +1,6 @@
 
 to setup-robots
-  ask n-of num-agents patches with [pcolor = white][sprout-robots 1[
+  ask n-of num-agents patches with [pcolor = white or pcolor = grey][sprout-robots 1[
     set color red
     set shape "circle"
     set direction 1
@@ -22,7 +22,6 @@ end
 
 to-report user-ahead?
   ifelse count other users-on patch-ahead 1 > 0 [
-    ;;show "USUARIO"
     set insatisfaction  insatisfaction + bump-user ;;colisão com usuarios
     report true
   ][
@@ -100,14 +99,18 @@ end
 
 to-report error-prob?
   let p random 100
-  ifelse p < error-probability [report true] [report false]
+  let cerror error-probability
+  if error-growth [
+    set cerror cerror + (error-probability * ticks) / 100
+    ;;show cerror
+  ]
+  ifelse p < cerror [report true] [report false]
 end
 
 
 to vacuuming-dust
   if pcolor = grey [
   ifelse error-prob?[
-    ;;show "vacuum-error"
     move-random 
   ][
     set cleanliness cleanliness + clean-energy

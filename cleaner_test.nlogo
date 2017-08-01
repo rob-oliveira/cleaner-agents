@@ -2,7 +2,6 @@ __includes["users.nls" "cleaner.nls" "manager.nls" "util.nls"]
 
 
 globals [
-  initial-dustiness
 
   energy-spent
   total-cleanliness
@@ -30,7 +29,7 @@ to setup
 
   setup-patches
   setup-obstacles
-  set initial-dustiness count patches with [pcolor = grey]
+
 
   setup-robots
   if users-on? [setup-users]
@@ -48,7 +47,7 @@ end
 
 to go
   if count patches with [pcolor = grey] = 0 [stop]
-  if tick >= 1000 [stop]
+  if ticks >= 1000 [stop]
   let current-users count users
   if users-on? and current-users < num-users [insert-users num-users - current-users]
 
@@ -65,7 +64,7 @@ to go
   ask managers [set-utility]
   measure-utility
   get-clean-percentage
-  random-dirty
+  if dirty-regrow? [random-dirty]
   tick
 end
 
@@ -102,7 +101,7 @@ end
 
 to setup-dirty
   let num-patches  count patches
-  set num-patches num-patches / 3
+  set num-patches num-patches * (ambient-dust / 100)
   ask n-of num-patches  patches with [pcolor = white] [set pcolor grey]
 end
 
@@ -119,8 +118,10 @@ end
 
 to get-clean-percentage
   let dirty-tiles count patches with [pcolor = grey]
-  let clean-tiles count patches with [pcolor = white]
-  set dirty-percentage 100 * (dirty-tiles / (clean-tiles + dirty-tiles))
+  ;;show count patches with [pcolor = grey or pcolor = white]
+  ;;let clean-tiles count patches with [pcolor = white]
+  set dirty-percentage dirty-tiles
+  ;;set dirty-percentage precision dirty-percentage 5
 end
 
 to setup-obstacles
@@ -134,9 +135,9 @@ to setup-obstacles
   ;;ask patch -14 7 [ set pcolor brown]
   ask patch -12 5 [ set pcolor brown]
   ask patch -14 5 [ set pcolor brown]
-  ask patch -7 12 [ set pcolor brown]
+  ;ask patch -7 12 [ set pcolor brown]
   ask patch -7 14 [ set pcolor brown]
-  ask patch -5 12 [ set pcolor brown]
+  ;ask patch -5 12 [ set pcolor brown]
   ask patch -5 14 [ set pcolor brown]
 
   ;;porta
@@ -238,12 +239,12 @@ NIL
 
 PLOT
 699
-178
+158
 1140
-477
-Utilidade dos agentes
+457
+Funções dos agentes
 iterações
-NIL
+Utilidade
 0.0
 100.0
 0.0
@@ -264,9 +265,9 @@ SLIDER
 259
 num-agents
 num-agents
-1
+0
 100
-1.0
+3.0
 1
 1
 NIL
@@ -281,7 +282,7 @@ num-users
 num-users
 0
 100
-3.0
+11.0
 1
 1
 NIL
@@ -326,7 +327,7 @@ error-probability
 error-probability
 0
 10
-1.6
+3.0
 0.1
 1
 %
@@ -360,7 +361,7 @@ INPUTBOX
 931
 70
 bump-user
-10.0
+30.0
 1
 0
 Number
@@ -372,7 +373,7 @@ SWITCH
 114
 managers-on?
 managers-on?
-1
+0
 1
 -1000
 
@@ -383,7 +384,7 @@ SWITCH
 113
 separate-zones?
 separate-zones?
-1
+0
 1
 -1000
 
@@ -399,15 +400,52 @@ users-on?
 -1000
 
 MONITOR
-700
-131
-787
-176
-dirty%
+1052
+409
+1139
+454
+dirty
 dirty-percentage
 5
 1
 11
+
+SWITCH
+700
+117
+850
+150
+dirty-regrow?
+dirty-regrow?
+0
+1
+-1000
+
+SLIDER
+16
+435
+188
+468
+ambient-dust
+ambient-dust
+0
+100
+25.0
+1
+1
+NIL
+HORIZONTAL
+
+SWITCH
+853
+117
+993
+150
+error-growth
+error-growth
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -769,8 +807,43 @@ NetLogo 6.0.1
   <experiment name="intelligent" repetitions="1000" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
-    <enumeratedValueSet variable="algorithm">
-      <value value="&quot;intelligent&quot;"/>
+    <metric>dirty-percentage</metric>
+    <enumeratedValueSet variable="num-agents">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-users">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-time">
+      <value value="10000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="user-dirty">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="error-probability">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="ambient-dust" first="10" step="10" last="100"/>
+    <enumeratedValueSet variable="users-on?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="managers-on?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="separate-zones?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-regrow?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="clean-energy">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="move-energy">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bump-user">
+      <value value="10"/>
     </enumeratedValueSet>
   </experiment>
   <experiment name="random" repetitions="1000" runMetricsEveryStep="false">
@@ -786,6 +859,267 @@ NetLogo 6.0.1
     <enumeratedValueSet variable="algorithm">
       <value value="&quot;random&quot;"/>
       <value value="&quot;intelligent&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="exp1_error" repetitions="300" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>dirty-percentage</metric>
+    <metric>total-utility</metric>
+    <enumeratedValueSet variable="separate-zones?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-users">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-agents">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-time">
+      <value value="10000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="users-on?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="managers-on?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="error-probability">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="ambient-dust" first="10" step="10" last="100"/>
+    <enumeratedValueSet variable="move-energy">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bump-user">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="user-dirty">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-regrow?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="clean-energy">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="error-growth">
+      <value value="true"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="exp2_user" repetitions="300" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>dirty-percentage</metric>
+    <metric>total-utility</metric>
+    <enumeratedValueSet variable="separate-zones?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="num-users" first="5" step="5" last="75"/>
+    <enumeratedValueSet variable="num-agents">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-time">
+      <value value="10000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="users-on?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="managers-on?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="error-probability">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ambient-dust">
+      <value value="25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="move-energy">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bump-user">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="user-dirty">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-regrow?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="clean-energy">
+      <value value="15"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="exp1_dinamic" repetitions="300" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>dirty-percentage</metric>
+    <metric>total-utility</metric>
+    <enumeratedValueSet variable="separate-zones?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-users">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-agents">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-time">
+      <value value="10000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="users-on?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="managers-on?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="error-probability">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="ambient-dust" first="10" step="10" last="100"/>
+    <enumeratedValueSet variable="move-energy">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bump-user">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="user-dirty">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-regrow?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="clean-energy">
+      <value value="15"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="exp3_cleaners" repetitions="300" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>dirty-percentage</metric>
+    <metric>total-utility</metric>
+    <enumeratedValueSet variable="separate-zones?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="num-users" first="5" step="5" last="75"/>
+    <enumeratedValueSet variable="num-agents">
+      <value value="12"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-time">
+      <value value="10000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="users-on?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="managers-on?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="error-probability">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ambient-dust">
+      <value value="25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="move-energy">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bump-user">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="user-dirty">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-regrow?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="clean-energy">
+      <value value="15"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="exp4_managers_9cleaners" repetitions="100" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>dirty-percentage</metric>
+    <metric>total-utility</metric>
+    <enumeratedValueSet variable="separate-zones?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="num-users" first="5" step="5" last="75"/>
+    <enumeratedValueSet variable="num-agents">
+      <value value="9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-time">
+      <value value="10000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="users-on?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="managers-on?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="error-probability">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ambient-dust">
+      <value value="25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="move-energy">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bump-user">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="user-dirty">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-regrow?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="clean-energy">
+      <value value="15"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="exp5_1" repetitions="100" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>dirty-percentage</metric>
+    <metric>total-utility</metric>
+    <enumeratedValueSet variable="separate-zones?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="num-users" first="5" step="5" last="75"/>
+    <enumeratedValueSet variable="num-agents">
+      <value value="9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-time">
+      <value value="10000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="users-on?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="managers-on?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="error-probability">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ambient-dust">
+      <value value="25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="move-energy">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bump-user">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="user-dirty">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="dirty-regrow?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="clean-energy">
+      <value value="15"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>

@@ -3,7 +3,7 @@
 
 to setup-managers[sector]
   ;;show sector
-  ask n-of 1 patches with [zone = sector and pcolor = white][sprout-managers 1[
+  ask n-of 1 patches with [zone = sector and (pcolor = white or pcolor = gray)][sprout-managers 1[
       set color green
       set shape "circle"
       set belonged-zone sector
@@ -23,10 +23,11 @@ end
 
 to receive-message [message sender]
   if message = 1 [
-    ;;show "WORKS!!"
-    face sender
-    rt 180
+    ;show "WORKS!!"
+    ;face sender
+    ;rt 180
     ;;fd 1
+    move-random
   ]
   ;;show sender
 end
@@ -39,23 +40,23 @@ to behave-manager
     find-zone
   ][
     ifelse dust-close? [
-      ;;show "move-int"
       move-intelligent
     ][
       ifelse scan-dust? [
-        ;;show "scan"
-        move-random
-        ;;fd 1
+        send-asp?
      ][
-       ;;show "search"
        search-dust 
      ]
     ]
-    ;;ask managers [send-message]
+    ask managers [send-message]
     vacuuming-dust
     if too-dirty? [ask-help] 
   ]
 
+end
+
+to send-asp? ;;essa função deve fazer o manager deliberar sobre mandar aspiradores ou ele mesmo ir limpar
+  move-random
 end
 
 to-report too-dirty?

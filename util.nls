@@ -59,7 +59,7 @@ to-report path-blocked?
   ifelse breed = robots[
     ;;show [pcolor] of patch-ahead 1
     
-    report [pcolor] of patch-ahead 1 = brown and [zone] of patch-ahead 1 = belonged-zone
+    report [pcolor] of patch-ahead 1 = brown or [zone] of patch-ahead 1 != belonged-zone
   ][
     report [pcolor] of patch-ahead 1 = brown 
   ]
@@ -68,16 +68,17 @@ end
 
 
 to move-random
-  
-   ifelse (can-move? 1) and not path-blocked? and not turtle-ahead? [
+  if breed = robots or breed = managers [set energy energy + move-energy]
+   
+  ifelse (can-move? 1) and not path-blocked? and not turtle-ahead? [
    ;; if breed = managers [show "can move"]
      forward 1
    ]
    [;bounce
      ;;show "random"
-     set heading random-float 360
+     set heading random-float 300
      ;;rt 180
      ;;orward 1
    ]
-   if breed = robots or breed = managers [set energy energy + move-energy]
+   
 end
